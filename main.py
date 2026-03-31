@@ -1,8 +1,12 @@
+from importlib.metadata import metadata
+
 import PIL.Image
 import PIL.ExifTags
 import piexif
 import os
 import time
+import sys
+from colorama import init, Fore, Style
 
 BANNER = """
 
@@ -17,10 +21,17 @@ BANNER = """
 
 class MetadataHacker:
   def __init__(self):
-    pass
-
+    # Define tags for the user to edit
+    self.safe_tags = {
+      '1': ('Artist', '0th', 315),
+      '2': ('Software', '0th', 305),
+      '3': ('Copyright', '0th', 33432),
+      '4': ('ImageDescription', '0th', 270)
+    }
+    
   def print_banner(self):
-    print(BANNER)
+    print(Fore.LIGHTGREEN_EX + Style.BRIGHT + BANNER)
+    print(Fore.GREEN + "[+] SYSTEM BOOT... SECURE CONNECTION ESTABLISHED.\n")
 
   def extract_metadata(self, image_path):
     try:
@@ -28,7 +39,7 @@ class MetadataHacker:
       exif = {PIL.ExifTags.TAGS[key]: value for key, value in img.getexif().items() if key in PIL.ExifTags.TAGS}
       return exif
     except Exception as e:
-      print(f"Error extracting metadata: {e}")
+      print(Fore.RED + f"[-] ERROR EXTRACTING METADATA: {e}")
       return None
     
   def remove_metadata(self, image_path):
@@ -39,98 +50,102 @@ class MetadataHacker:
       img_without_exif.putdata(data)
       new_path = os.path.splitext(image_path)[0] + "_no_metadata" + os.path.splitext(image_path)[1]
       img_without_exif.save(new_path)
-      print(f"[+] METADATA REMOVED. NEW FILE: {new_path}")
+      print(Fore.LIGHTGREEN_EX + f"[+] METADATA PURGED. FILE SAVED: {new_path}")
     except Exception as e:
-      print(f"Error removing metadata: {e}")
+      print(Fore.RED + f"[-] ERROR REMOVING METADATA: {e}")
 
   def modify_metadata(self, image_path):
     try:
       exif_dict = piexif.load(image_path)
-      modified = False
-
-      # Process each IFD (Image File Directory)
-      for ifd_name in ("0th", "Exif", "GPS", "1st", "Interop"):
-        ifd = exif_dict[ifd_name]
-        print(f"\n[!] {ifd_name} IFD METADATA:")
-        
-        for tag in list(ifd.keys()):
-          tag_name = piexif.TAGS[ifd_name][tag]["name"]
-          current_value = ifd[tag]
-          
-          print(f"\n{tag_name}: {current_value}")
-          print("[?] ENTER NEW VALUE (OR PRESS ENTER TO KEEP ORIGINAL): ")
-          new_value = input().strip()
-          
-          if new_value:
-            try:
-              # Try to convert to bytes if needed
-              if isinstance(current_value, bytes):
-                ifd[tag] = new_value.encode('utf-8')
-              else:
-                ifd[tag] = new_value
-              modified = True
-              print("[+] VALUE UPDATED.")
-            except Exception as e:
-              print(f"[-] ERROR UPDATING VALUE: {e}")
-          else:
-            print("[+] KEEPING ORIGINAL VALUE.")
+      modifications_made = False
       
-      if modified:
-        new_path = os.path.splitext(image_path)[0] + "_modified" + os.path.splitext(image_path)[1]
-        exif_bytes = piexif.dump(exif_dict)
-        img = PIL.Image.open(image_path)
-        img.save(new_path, exif=exif_bytes)
-        print(f"\n[+] METADATA MODIFIED. NEW FILE: {new_path}")
-      else:
-        print("\n[-] NO CHANGES MADE.")
+      while True:
+        print(Fore.GREEN + "\n[!] SELECT TARGET TAG TO OVERWRITE:")
+        for key, (name, _, _) in self.safe_tags.items():
+          print(Fore.LIGHTGREEN_EX + f"    [{key}] {name}")
+        print(Fore.LIGHTGREEN_EX + "    [5] SAVE & EXIT")
+        print(Fore.LIGHTGREEN_EX + "    [6] CANCEL (DISCARD ALL CHANGES)")
+              
+        choice = input(Fore.GREEN + "[?] >> ").strip()
+              
+        if choice in self.safe_tags:
+          tag_name, ifd_name, tag_id = self.safe_tags[choice]
+                  
+          print(Fore.GREEN + f"\n[?] ENTER NEW STRING FOR '{tag_name}': ")
+          new_value = input(Fore.LIGHTGREEN_EX + ">> ").strip()
+                  
+          if new_value:
+            # Inject the new value
+            exif_dict[ifd_name][tag_id] = new_value.encode('utf-8')
+            modifications_made = True
+            print(Fore.LIGHTGREEN_EX + f"[+] '{tag_name}' UPDATED.")
+          else:
+            print(Fore.YELLOW + "[-] INPUT EMPTY. NO CHANGE FOR THIS TAG.")
+        elif choice == '5':
+          if modifications_made:
+            # Save the new file
+            new_path = os.path.splitext(image_path)[0] + "_forged" + os.path.splitext(image_path)[1]
+            exif_bytes = piexif.dump(exif_dict)
+            img = PIL.Image.open(image_path)
+            img.save(new_path, exif=exif_bytes)
+            print(Fore.LIGHTGREEN_EX + f"\n[+] METADATA INJECTED. NEW FILE SAVED: {new_path}")
+          else:
+            print(Fore.YELLOW + "[-] NO CHANGES MADE.")
+          break
+        elif choice == '6':
+          print(Fore.YELLOW + "[-] MODIFICATION CANCELLED. NO CHANGES SAVED.")
+          break
+        else:
+          print(Fore.RED + "[-] INVALID SELECTION.")
+                
     except Exception as e:
-      print(f"Error modifying metadata: {e}")
+      print(Fore.RED + f"[-] ERROR MODIFYING METADATA: {e}")  
 
 def main():
   hacker = MetadataHacker()
   hacker.print_banner()
 
   while True:
-    print("\n[?] ENTER TARGET FILE PATH (OR 'EXIT' TO ABORT): ")
+    print(Fore.GREEN + "\n[?] ENTER TARGET FILE PATH (OR 'EXIT'): ")
     image_path = input().strip()
 
     if image_path.lower() == "exit":
-      print("[+] TERMINATING SESSION...")
+      print(Fore.YELLOW + "[+] TERMINATING SESSION...")
       break
 
     if not os.path.isfile(image_path):
-      print("[-] ERROR: FILE NOT FOUND. CHECK YOUR PATH.")
+      print(Fore.RED + "[-] ERROR: FILE NOT FOUND. VERIFY PATH.")
       continue
 
     metadata = hacker.extract_metadata(image_path)
     if metadata:
-      print("\n[!] EXTRACTED METADATA:")
+      print(Fore.LIGHTGREEN_EX + "\n[!] EXTRACTED DATA STREAM:")
+      print(Fore.GREEN + "-" * 40)
       for key, value in metadata.items():
-        print(f"{key}: {value}")
+        print(Fore.LIGHTGREEN_EX + f" {key:<20} : {value}")
+      print(Fore.GREEN + "-" * 40)
 
-      print('\n[?] SELECT OPERATION:')
-      print('[1] REMOVE ALL METADATA')
-      print('[2] MODIFY METADATA')
-      print('[3] CANCEL')
-      choice = input().strip()
+      print(Fore.GREEN + '\n[?] SELECT OPERATION:')
+      print(Fore.LIGHTGREEN_EX + '    [1] GHOST FILE (REMOVE ALL METADATA)')
+      print(Fore.LIGHTGREEN_EX + '    [2] FORGE DATA (MODIFY METADATA)')
+      print(Fore.LIGHTGREEN_EX + '    [3] ABORT')
+
+      choice = input(Fore.GREEN + "[?] >> ").strip()
 
       if choice == '1':
-        print("\n[+] REMOVING METADATA...")
-        time.sleep(2) # Simulate processing time
+        print(Fore.YELLOW + "\n[+] INITIATING PURGE SEQUENCE...")
+        time.sleep(1) # Simulate processing time
         hacker.remove_metadata(image_path)
-        print("[+] OPERATION COMPLETED.")
 
       elif choice == '2':
-        print("\n[+] MODIFYING METADATA...")
-        time.sleep(2) # Simulate processing time
         hacker.modify_metadata(image_path)
-        print("[+] OPERATION COMPLETED.")
       elif choice == '3':
-        print("\n[+] OPERATION CANCELLED.")
-        break
+        print(Fore.YELLOW + "\n[-] OPERATION CANCELLED.")
+      else:
+        print(Fore.RED + "[-] INVALID COMMAND.")
     else:
       time.sleep(1)
-      print("[-] NO METADATA FOUND IN THIS FILE.")
+      print(Fore.YELLOW + "[-] NO METADATA DETECTED IN TARGET FILE.")
 
 
 if __name__ == "__main__":

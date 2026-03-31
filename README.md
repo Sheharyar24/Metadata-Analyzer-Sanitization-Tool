@@ -1,6 +1,17 @@
-# 🔐 Metadata Hacker
+# 🔐 Metadata Analyzer & Privacy Sanitization Tool
 
-A powerful command-line utility for analyzing, removing, and forging image metadata. Perfect for privacy-conscious users, security professionals, and anyone concerned about hidden data in their images.
+A Python-based security tool designed to analyze, sanitize, and manage image metadata to prevent unintended information leakage. This project focuses on privacy protection and secure handling of embedded data commonly found in digital images.
+
+---
+# 📌 Overview
+
+Digital images often contain hidden metadata (EXIF) such as GPS location, device details, timestamps, and author information. This data can be exploited for **Open-Source Intelligence (OSINT)** and may lead to privacy breaches.
+
+This tool enables users to:
+
+- Inspect embedded metadata
+- Identify potential privacy risks
+- Remove or modify sensitive information before sharing files
 
 ---
 
@@ -8,7 +19,7 @@ A powerful command-line utility for analyzing, removing, and forging image metad
 
 - **🔍 Extract Metadata** - View all EXIF data and metadata embedded in image files
 - **🧹 Remove Metadata** - Completely strip all metadata from images (create "ghost files")
-- **✏️ Forge Metadata** - Modify specific metadata tags with custom values
+- **✏️ Modify Metadata** - Modify specific metadata tags with custom values
   - Edit Artist, Software, Copyright, and Image Description tags
   - Edit multiple tags in a single session
   - Keep original values or replace them
@@ -80,46 +91,11 @@ When you select option `[1]`:
 
 ---
 
-## 📝 Examples
-
-**Extract metadata from an image:**
-```bash
-python main.py
-[?] ENTER TARGET FILE PATH (OR 'EXIT'): 
-C:\Users\YourName\Pictures\photo.jpg
-```
-
-**Remove all metadata:**
-```
-[?] SELECT OPERATION:
-    [1] GHOST FILE (REMOVE ALL METADATA)
-    [2] FORGE DATA (MODIFY METADATA)
-    [3] ABORT
-[?] >> 1
-```
-Output: `photo_no_metadata.jpg`
-
-**Modify metadata:**
-```
-[?] SELECT OPERATION:
-    [1] GHOST FILE (REMOVE ALL METADATA)
-    [2] FORGE DATA (MODIFY METADATA)
-    [3] ABORT
-[?] >> 2
-
-[!] SELECT TARGET TAG TO OVERWRITE:
-    [1] Artist
-    [2] Software
-    [3] Copyright
-    [4] ImageDescription
-    [5] SAVE & EXIT
-    [6] CANCEL (DISCARD ALL CHANGES)
-[?] >> 1
-[?] ENTER NEW STRING FOR 'Artist': 
-Anonymous User
-```
-Output: `photo_forged.jpg`
-
+## 🔐 Security & Privacy Use Cases
+- Prevent **unintentional data exposure** when sharing images
+- Support **OSINT awareness and analysis**
+- Assist in **digital forensics and metadata inspection**
+- Demonstrate **data sanitization techniques** used in secure environments 
 ---
 
 ## 🔧 Supported Metadata Tags
